@@ -1,4 +1,4 @@
-import spacy, os, datetime
+import spacy, os, datetime, csv
 #import mysql.connector
 
 # Cargar el modelo de lenguaje
@@ -31,6 +31,8 @@ if True != os.path.exists('Historial'): # Si la carpeta ya existe no la crea
 #Funcion que analiza la entrada texto
 def analisis_texto(texto):
     # Procesar el texto con spaCy
+    mensajes = []
+    mensajes.append(("Analizando frase",2))
     doc = nlp(texto)
     
     bloqueo = ["bloquear", "impedir", "prohibir", "cerrar", "cortar", "incomunicar", "aislar"]
@@ -73,7 +75,7 @@ def analisis_texto(texto):
             ip=token.text
         """
         
-        print(token.text, token.pos_)
+        #print(token.text, token.pos_)
         #Guarda Nodo con nombre
         if token.text.lower() == "nodo":
             if sust_1 == "":
@@ -105,50 +107,103 @@ def analisis_texto(texto):
         #Fin del for
 
     # Determinar el resultado final
-    if (bloquear_internet == True and negacion == False) or (permitir_internet == True and negacion == True):
-        if sust_1 != "":
-            #COMPROBAR SI LA IP ESTA EN LA BD
-            print("Se bloquea el acceso a internet.")
-            fecha = datetime.datetime.now()
-            archi = open('Historial/{0}.txt'.format(fecha.strftime("%d-%m-%Y_%H-%M-%S")), 'wt')
-            #BUSCAR LA IP DE SUST NEXT_SUST EN LA BASE DE DATOS, TODAVIA NO LO APLICO
-            text = str("Output: \n$configure terminal\n$access-list extended block-out\n$deny ip" + sust_1 + " " + next_sust_1 + " any\n$exit\n$interface eth0\n$ip access-group block-out in\n$exit")
-            archi.write(text)
-            archi.close()
-        elif ip_1 != 0:
-            #COMPROBAR SI LA IP ESTA EN LA BD
-            print("Se bloquea el acceso a internet.")
-            fecha = datetime.datetime.now()
-            archi = open('Historial/{0}.txt'.format(fecha.strftime("%d-%m-%Y_%H-%M-%S")), 'wt')
-            text = str("Output: \n$configure terminal\n$access-list extended block-out\n$deny ip " + ip_1 + " any\n$exit\n$interface eth0\n$ip access-group block-out in\n$exit")
-            archi.write(text)
-            archi.close()
-        else:
-            print("Especifique un objeto valido para bloquear internet")
-    elif (bloquear_internet == True and negacion == True) or (permitir_internet == True and negacion == False):
-        #AGREGAR EL CODIGO NECESARIO
-        print("Se permite el acceso a internet.")
-    elif (ping_conexion == True):
-        #AGREGAR CODIGO NECESARIO EN TODOS LOS IF/ELIF
-        if sust_1 != "":
-            if sust_2 != "":
-                print("Hacer ping entre {0} {1} y {2} {3}".format(sust_1, next_sust_1, sust_2, next_sust_2))
-            elif ip_1 != 0:
-                print("Hacer ping entre {0} {1} y {2}".format(sust_1, next_sust_1, ip_1))
-            else:
-                print("Especifica una segunda conexion")
-        elif ip_1 != 0:
+    mensajes.append(("Determinando Resultado",2))
+    #Se crea un archivo csv de nombre Historial, empieca vacio con dos columnas
+    columnas = ["Fecha", "Accion", "Nodo(s) Origen/Destino"]
+    with open('Historial/Historial.csv', mode='w') as file:
+        writer = csv.writer(file)
+        writer.writerow(columnas)
+        if (bloquear_internet == True and negacion == False) or (permitir_internet == True and negacion == True):
             if sust_1 != "":
-                print("Hacer ping entre {0} y {1} {2}".format(ip_1, sust_1, next_sust_1))
-            elif ip_2 != 0:
-                print("Hacer ping entre {0} y {1}".format(ip_1, ip_2))
+                #COMPROBAR SI LA IP ESTA EN LA BD
+                mensajes.append(("Se bloquea el acceso a internet.",0))
+                fecha = datetime.datetime.now()
+                fecha = fecha.strftime("%d-%m-%Y_%H-%M-%S")
+                archi = open('Historial/{0}.txt'.format(fecha), 'wt')
+                #BUSCAR LA IP DE SUST NEXT_SUST EN LA BASE DE DATOS, TODAVIA NO LO APLICO
+                text = str("Output: \n$configure terminal\n$access-list extended block-out\n$deny ip" + sust_1 + " " + next_sust_1 + " any\n$exit\n$interface eth0\n$ip access-group block-out in\n$exit")
+                archi.write(text)
+                archi.close()
+                #"Fecha", "Accion", "Nodo(s) Origen/Destino"
+                Hist = [fecha, "Se bloquea el acceso a internet", sust_1 + " " + next_sust_1]
+                writer.writerow(Hist)
+                
+            elif ip_1 != 0:
+                #COMPROBAR SI LA IP ESTA EN LA BD
+                mensajes.append(("Se bloquea el acceso a internet.",0))
+                fecha = datetime.datetime.now()
+                fecha = fecha.strftime("%d-%m-%Y_%H-%M-%S")
+                archi = open('Historial/{0}.txt'.format(fecha), 'wt')
+                text = str("Output: \n$configure terminal\n$access-list extended block-out\n$deny ip " + ip_1 + " any\n$exit\n$interface eth0\n$ip access-group block-out in\n$exit")
+                archi.write(text)
+                archi.close()
+                #"Fecha", "Accion", "Nodo(s) Origen/Destino"
+                Hist = [fecha, "Se bloquea el acceso a internet", ip_1]
+                writer.writerow(Hist)
             else:
-                print("Especifica una segunda conexion")
+                mensajes.append(("Especifique un objeto valido para bloquear internet",1))
+        elif (bloquear_internet == True and negacion == True) or (permitir_internet == True and negacion == False):
+            #AGREGAR EL CODIGO NECESARIO
+            mensajes.append(("Se permite el acceso a internet.",0))
+        elif (ping_conexion == True):
+            #AGREGAR CODIGO NECESARIO EN TODOS LOS IF/ELIF
+            if sust_1 != "":
+                if sust_2 != "":
+                    fecha = datetime.datetime.now()
+                    fecha = fecha.strftime("%d-%m-%Y_%H-%M-%S")
+                    archi = open('Historial/{0}.txt'.format(fecha), 'wt')
+                    text = str("Hacer ping entre {0} {1} y {2} {3}".format(sust_1, next_sust_1, sust_2, next_sust_2))
+                    mensajes.append((text,0))
+                    archi.write(text)
+                    archi.close()
+                    #"Fecha", "Accion", "Nodo(s) Origen/Destino"
+                    Hist = [fecha, "Se hace ping", sust_1 + " " + next_sust_1 + " / " + sust_2 + " " + next_sust_2]
+                    writer.writerow(Hist)
+                elif ip_1 != 0:
+                    fecha = datetime.datetime.now()
+                    fecha = fecha.strftime("%d-%m-%Y_%H-%M-%S")
+                    archi = open('Historial/{0}.txt'.format(fecha), 'wt')
+                    text = str("Hacer ping entre {0} {1} y {2}".format(sust_1, next_sust_1, ip_1))
+                    mensajes.append((text,0))
+                    archi.write(text)
+                    archi.close()
+                    #"Fecha", "Accion", "Nodo(s) Origen/Destino"
+                    Hist = [fecha, "Se hace ping", sust_1 + " " + next_sust_1 + " / " + ip_1]
+                    writer.writerow(Hist)
+                else:
+                    mensajes.append(("Especifica una segunda conexion",1))
+            elif ip_1 != 0:
+                if sust_1 != "":
+                    fecha = datetime.datetime.now()
+                    fecha = fecha.strftime("%d-%m-%Y_%H-%M-%S")
+                    archi = open('Historial/{0}.txt'.format(fecha), 'wt')
+                    text = str("Hacer ping entre {0} y {1} {2}".format(ip_1, sust_1, next_sust_1))
+                    mensajes.append((text,0))
+                    archi.write(text)
+                    archi.close()
+                    #"Fecha", "Accion", "Nodo(s) Origen/Destino"
+                    Hist = [fecha, "Se hace ping", ip_1 + " / " + sust_1 + " " + next_sust_1]
+                    writer.writerow(Hist)
+                elif ip_2 != 0:
+                    fecha = datetime.datetime.now()
+                    fecha = fecha.strftime("%d-%m-%Y_%H-%M-%S")
+                    archi = open('Historial/{0}.txt'.format(fecha), 'wt')
+                    text = str("Hacer ping entre {0} y {1}".format(ip_1, ip_2))
+                    mensajes.append((text,0))
+                    archi.write(text)
+                    archi.close()
+                    #"Fecha", "Accion", "Nodo(s) Origen/Destino"
+                    Hist = [fecha, "Se hace ping", ip_1 + " / " + ip_2]
+                    writer.writerow(Hist)
+                else:
+                    mensajes.append(("Especifica una segunda conexion",1))
+            else:
+                mensajes.append(("Especifica una conexion",1))
+        #FALTAN MAS COMANDOS??
         else:
-            print("Especifica una conexion")
-    #FALTAN MAS COMANDOS??
-    else:
-        print("Ningun comando conocido.")
+            mensajes.append(("Ningun comando conocido.",1))
+        mensajes.append(("Listo",2))
+    return mensajes
 
 # Texto en lenguaje natural
 
