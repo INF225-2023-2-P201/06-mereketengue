@@ -3,6 +3,8 @@
 # Bibliotecas necesarias
 - [Dearpygui](https://pypi.org/project/dearpygui/)
 - [Spacy](https://spacy.io/usage) (Selecionar en Trained pipelines la opcion de Spanish)
+- [Flask](https://flask.palletsprojects.com/en/3.0.x/installation/) Para instalacion en ubuntu, se debe ingresar en terminal  pip install Flask
+- mySql.connection Para instalar se debe tener mySql instalado e ingresar en la terminal pip install pip install mysql-connector-python
 
 # Instrucciones de ejecución:
 - Interfaz e interpretador:
@@ -18,3 +20,5 @@ Un ejemplo de uso sería:
 
 - Base de datos:
   Para visualizar esta se debe utilizar MySql, esta contiene 3 tablas junto con sus respectivos valores.
+
+  
